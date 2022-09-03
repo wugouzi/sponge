@@ -1,5 +1,5 @@
-#include "socket.hh"
-#include "util.hh"
+#include "../libsponge/util/socket.hh"
+#include "../libsponge/util/util.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -8,7 +8,20 @@ using namespace std;
 
 void get_URL(const string &host, const string &path) {
     // Your code here.
+  TCPSocket sock;
+  sock.connect(Address(host, "http"));
 
+  sock.write("GET "+path+" HTTP/1.1\r\n");
+  sock.write("Host: "+host+"\r\n");
+  sock.write("Connection: close\r\n\r\n");
+  while (1) {
+    auto recvd = sock.read();
+    cout << recvd;
+    if (sock.eof()) {
+      sock.close();
+      return;
+    }
+  }
     // You will need to connect to the "http" service on
     // the computer whose name is in the "host" string,
     // then request the URL path given in the "path" string.
