@@ -4,7 +4,8 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
-#include <string>
+#include <iostream>
+#include <map>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -12,8 +13,15 @@ class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
 
-    ByteStream _output;  //!< The reassembled in-order byte stream
-    size_t _capacity;    //!< The maximum number of bytes
+  ByteStream _output;  //!< The reassembled in-order byte stream
+  size_t _capacity;    //!< The maximum number of bytes
+
+  std::map<size_t, std::string> _map;
+  size_t _cur_idx;
+  // bool _eof;
+  size_t _end_idx;
+
+  bool push_substring_helper(const std::string& data, const size_t index);
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -29,7 +37,7 @@ class StreamReassembler {
     //! \param data the substring
     //! \param index indicates the index (place in sequence) of the first byte in `data`
     //! \param eof the last byte of `data` will be the last byte in the entire stream
-    void push_substring(const std::string &data, const uint64_t index, const bool eof);
+    void push_substring(const std::string &data, const size_t index, const bool eof);
 
     //! \name Access the reassembled byte stream
     //!@{
@@ -41,7 +49,7 @@ class StreamReassembler {
     //!
     //! \note If the byte at a particular index has been pushed more than once, it
     //! should only be counted once for the purpose of this function.
-    size_t unassembled_bytes() const;
+    size_t unassembled_bytes();
 
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
