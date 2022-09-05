@@ -1,7 +1,7 @@
 #ifndef SPONGE_LIBSPONGE_TCP_SEGMENT_HH
 #define SPONGE_LIBSPONGE_TCP_SEGMENT_HH
 
-#include "buffer.hh"
+#include "../util/buffer.hh"
 #include "tcp_header.hh"
 
 #include <cstdint>

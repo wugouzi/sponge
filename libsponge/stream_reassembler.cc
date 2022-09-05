@@ -13,7 +13,7 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-StreamReassembler::StreamReassembler(const size_t capacity) : _output(capacity), _capacity(capacity),
+StreamReassembler::StreamReassembler(const size_t capacity) : _capacity(capacity), _output(_capacity),
                                                               _map(), _cur_idx(0),
                                                               _end_idx(-1) {
 }
@@ -66,22 +66,18 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
   }
 }
 
-size_t StreamReassembler::unassembled_bytes() {
+size_t StreamReassembler::unassembled_bytes() const {
   size_t tmp_idx = _cur_idx;
   size_t ans = 0;
 
-  for (auto it = _map.begin(); it != _map.end();) {
+  for (auto it = _map.begin(); it != _map.end(); it++) {
     size_t idx = it->first, sz = it->second.size();
     if (idx >= tmp_idx) {
       ans += sz;
       tmp_idx = idx + sz;
-      it++;
     } else if (tmp_idx < idx + sz) {
       ans += idx + sz - tmp_idx;
       tmp_idx = idx + sz;
-      it++;
-    } else {
-      it = _map.erase(it);
     }
   }
   return ans;

@@ -13,8 +13,9 @@ class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
 
-  ByteStream _output;  //!< The reassembled in-order byte stream
   size_t _capacity;    //!< The maximum number of bytes
+  ByteStream _output;  //!< The reassembled in-order byte stream
+
 
   std::map<size_t, std::string> _map;
   size_t _cur_idx;
@@ -49,7 +50,7 @@ class StreamReassembler {
     //!
     //! \note If the byte at a particular index has been pushed more than once, it
     //! should only be counted once for the purpose of this function.
-    size_t unassembled_bytes();
+    size_t unassembled_bytes() const;
 
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
