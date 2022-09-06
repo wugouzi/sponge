@@ -91,6 +91,7 @@ int main() {
             test.execute(Tick{1});
             test.execute(ExpectState{TCPSenderStateSummary::FIN_SENT});
             test.execute(ExpectBytesInFlight{1});
+            // problem
             test.execute(ExpectSegment{}.with_fin(true).with_seqno(isn + 1));
             test.execute(ExpectNoSegment{});
             test.execute(Tick{1});

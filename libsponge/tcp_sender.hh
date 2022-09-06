@@ -19,18 +19,32 @@ class TCPSender {
   private:
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
+    WrappingInt32 _ackno;
 
     //! outbound queue of segments that the TCPSender wants sent
     std::queue<TCPSegment> _segments_out{};
+    std::queue<TCPSegment> _segments_waiting{};
 
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
+    unsigned int _retransmission_timeout;
+    unsigned int _current_time;
+    unsigned int _retransmission_cnt;
+    
+    size_t _win_size{1};
+    bool _timer_start;
+    bool _syn{true};
+    bool _fin{false};
+    bool _before_ack{true};
+    bool _win_zero_flag{false};
 
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+    uint64_t _ack_seqno{0};
+    uint64_t _end_seqno{UINT64_MAX};
 
   public:
     //! Initialize a TCPSender
