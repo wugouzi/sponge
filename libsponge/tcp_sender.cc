@@ -76,12 +76,12 @@ void TCPSender::fill_window() {
 
 //! \param ackno The remote receiver's ackno (acknowledgment number)
 //! \param window_size The remote receiver's advertised window size
-void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
+bool TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     _before_ack = false;
     uint64_t ack_seqno = unwrap(ackno, _isn, _next_seqno);
     _win_size = window_size + ack_seqno - _next_seqno;
     if (ack_seqno <= _ack_seqno || ack_seqno > _next_seqno)
-        return;
+        return false;
     // _ack_seqno = ack_seqno;
     _retransmission_timeout = _initial_retransmission_timeout;
     
@@ -109,6 +109,7 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     }
 
     fill_window();
+    return true;
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
@@ -117,16 +118,29 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         return;
     _current_time += ms_since_last_tick;
 
-    if (!_segments_waiting.empty() && _current_time >= _retransmission_timeout) {
-        _segments_out.push(_segments_waiting.front());
-        // _segments_waiting.push(_segments_waiting.front());
-        // _segments_waiting.pop();
-        if (!_win_zero_flag) {
-            _retransmission_cnt++;
-            _retransmission_timeout *= 2;
+    if (_current_time >= _retransmission_timeout) {
+        if (!_segments_waiting.empty()) {
+            _segments_out.push(_segments_waiting.front());
+            // _segments_waiting.push(_segments_waiting.front());
+            // _segments_waiting.pop();
+            if (!_win_zero_flag) {
+                _retransmission_cnt++;
+                _retransmission_timeout *= 2;
+            }   
         }
         _current_time = 0;
     }
+
+    // if (!_segments_waiting.empty() && _current_time >= _retransmission_timeout) {
+    //     _segments_out.push(_segments_waiting.front());
+    //     // _segments_waiting.push(_segments_waiting.front());
+    //     // _segments_waiting.pop();
+    //     if (!_win_zero_flag) {
+    //         _retransmission_cnt++;
+    //         _retransmission_timeout *= 2;
+    //     }
+    //     _current_time = 0;
+    // }
 }
 
 unsigned int TCPSender::consecutive_retransmissions() const { return _retransmission_cnt; }

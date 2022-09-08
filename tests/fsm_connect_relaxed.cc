@@ -71,6 +71,7 @@ int main() {
             test_2.execute(Tick(1));
             test_2.execute(ExpectNoSegment{}, "test 2 failed: got spurious ACK after ACKing SYN");
             test_2.execute(ExpectState{State::ESTABLISHED});
+            cout << "test" << endl;
         }
 
         // test #3: START -> SYN_SENT -> SYN/ACK -> ESTABLISHED

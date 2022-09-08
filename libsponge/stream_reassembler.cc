@@ -38,7 +38,7 @@ bool StreamReassembler::push_substring_helper(const std::string &data, const siz
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
   if (data.size() > 0) {
-    if (data.size() + index <= _cur_idx) {
+    if (data.size() + index <= _cur_idx || _cur_idx + _capacity <= index) {
       return;
     }
     if (push_substring_helper(data, index)) {

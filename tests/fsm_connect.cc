@@ -26,7 +26,7 @@ int main() {
         // test #1: START -> SYN_SENT -> ACK (ignored) -> SYN -> SYN_RECV
         {
             TCPTestHarness test_1(cfg);
-
+            
             // tell the FSM to connect, make sure we get a SYN
             test_1.execute(Connect{});
             test_1.execute(Tick(1));
@@ -39,7 +39,7 @@ int main() {
             test_1.send_ack(WrappingInt32{0}, seg1.header().seqno + 1);
             test_1.execute(Tick(1));
             test_1.execute(ExpectState{State::SYN_SENT});
-
+            
             // now send SYN
             const WrappingInt32 isn(rd());
             test_1.send_syn(isn);
@@ -49,6 +49,7 @@ int main() {
             test_1.execute(ExpectOneSegment{}.with_ack(true).with_syn(false).with_ackno(isn + 1));
 
             test_1.execute(ExpectBytesInFlight{1UL});
+            
         }
 
         // test #2: START -> SYN_SENT -> SYN -> ACK -> ESTABLISHED

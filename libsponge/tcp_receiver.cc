@@ -1,4 +1,4 @@
-#include "tcp_receiver.hh"
+  #include "tcp_receiver.hh"
 #include "wrapping_integers.hh"
 #include <cstdint>
 
@@ -13,7 +13,6 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 using namespace std;
 
 void TCPReceiver::segment_received(const TCPSegment &seg) {
-  
   if (!_isn_recv && !seg.header().syn)
     return;
   if (seg.header().syn) {
@@ -24,6 +23,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
   uint64_t ackno = _reassembler.stream_out().bytes_read() + 1;
   uint64_t idx = unwrap(seg.header().seqno, _isn, ackno) - 1 + seg.header().syn;
 
+  // uint64_t idx = _reassembler.stream_out().bytes_read() + seg.length_in_sequence_space() - seg.header().syn;
   _reassembler.push_substring(seg.payload().copy(), idx, seg.header().fin);
 }
 
