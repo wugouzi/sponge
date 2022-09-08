@@ -5,7 +5,7 @@
 
 #include <cstdint>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -16,11 +16,14 @@ class StreamReassembler {
   size_t _capacity;    //!< The maximum number of bytes
   ByteStream _output;  //!< The reassembled in-order byte stream
 
-
-  std::map<size_t, std::string> _map;
-  size_t _cur_idx;
-  // bool _eof;
-  size_t _end_idx;
+  std::deque<char> _stream{};
+  std::unordered_map<size_t, bool> _occupied{};
+  // std::map<size_t, std::string> _map;
+  size_t _unassembled{0};
+  size_t _cur_idx{0};
+  size_t _end_idx{UINT32_MAX};
+  // bool _eof{false};
+  // size_t _end_idx;
 
   bool push_substring_helper(const std::string& data, const size_t index);
 

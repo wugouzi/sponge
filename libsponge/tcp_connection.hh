@@ -15,10 +15,7 @@ class TCPConnection {
     size_t _current_time{0};
     size_t _seg_time{0};
     std::optional<size_t> _stream_end_time{};
-    bool _stop_send{false};
-    bool _syn{false};
-    bool _fin{false};
-    bool _last_ack{false};
+    bool _active{true};
 
     //! outbound queue of segments that the TCPConnection wants sent
     std::queue<TCPSegment> _segments_out{};
@@ -29,6 +26,10 @@ class TCPConnection {
     bool _linger_after_streams_finish{true};
 
     void write_segment();
+
+    void unclean_shutdown();
+
+    void send_rst();
 
   public:
     //! \name "Input" interface for the writer
