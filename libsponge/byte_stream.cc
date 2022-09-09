@@ -12,72 +12,60 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity): capacity_(capacity), queue_(std::deque<char>()),
-                                               wc_(0), rc_(0), end_(false) {
+ByteStream::ByteStream(const size_t capacity): _capacity(capacity) {
 }
 
 size_t ByteStream::write(const string &data) {
-  if (end_) {
+  if (_end) {
     return 0;
   }
-  int res = 0;
-  for (auto& c : data) {
-    if (queue_.size() < capacity_) {
-      queue_.push_back(c);
-      wc_++;
-      res++;
-    }
-  }
+  size_t res = min(data.size(), _capacity - _buf_size);
+  _queue.append(BufferList(move(string().assign(data.begin(), data.begin() + res))));
+  _buf_size += res;
+  _byte_write += res;
   return res;
 }
 
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
-  string ans;
-  for (size_t i = 0; i < len; i++) {
-    ans.push_back(queue_[i]);
-  }
-  return ans;
+  string str = _queue.concatenate();
+  return string().assign(str.begin(), str.begin() + min(len, str.size()));
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
-void ByteStream::pop_output(const size_t _len) {
-  int len = _len;
-  while (len && !queue_.empty()) {
-    queue_.pop_front();
-    len--;
-    rc_++;
-  }
+void ByteStream::pop_output(const size_t len) {
+  const size_t sz = min(len, _buf_size);
+  _byte_read += sz;
+  _buf_size -= sz;
+  _queue.remove_prefix(sz);
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
-std::string ByteStream::read(const size_t _len) {
-  string ans;
-  int len = _len;
-  while (len-- && !queue_.empty()) {
-    ans.push_back(queue_.front());
-    queue_.pop_front();
-    rc_++;
-  }
-  return ans;
+std::string ByteStream::read(const size_t len) {
+  const size_t sz = min(len, _buf_size);
+  _buf_size -= sz;
+  _byte_read += sz;
+  string str = _queue.concatenate();
+  _queue.remove_prefix(sz);
+  return str.assign(str.begin(), str.begin() + sz);
 }
 
 void ByteStream::end_input() {
-  end_ = true;
+  _end = true;
 }
 
-bool ByteStream::input_ended() const { return end_; }
+bool ByteStream::input_ended() const { return _end; }
 
-size_t ByteStream::buffer_size() const { return queue_.size(); }
+size_t ByteStream::buffer_size() const { return _buf_size; }
 
-bool ByteStream::buffer_empty() const { return queue_.empty(); }
+bool ByteStream::buffer_empty() const { return _buf_size == 0; }
 
-bool ByteStream::eof() const { return end_ && queue_.empty(); }
+bool ByteStream::eof() const { return input_ended() && buffer_empty(); }
 
-size_t ByteStream::bytes_written() const { return wc_; }
+size_t ByteStream::bytes_written() const { return _byte_write; }
 
-size_t ByteStream::bytes_read() const { return rc_; }
+size_t ByteStream::bytes_read() const { return _byte_read; }
 
-size_t ByteStream::remaining_capacity() const { return capacity_-queue_.size(); }
+size_t ByteStream::remaining_capacity() const { return _capacity - _buf_size; }

@@ -38,7 +38,7 @@ class TCPConnection {
 
     void change_state(STATE);
 
-    void print_seg(const TCPSegment&);
+    void print_seg(const TCPSegment&, bool);
 
   public:
     //! \name "Input" interface for the writer

@@ -45,6 +45,7 @@ class TCPSender {
     uint64_t _next_seqno{0};
     uint64_t _ack_seqno{0};
     uint64_t _end_seqno{UINT64_MAX};
+    size_t _bytes_in_fly{0};
 
   public:
     //! Initialize a TCPSender
@@ -62,7 +63,7 @@ class TCPSender {
     //!@{
 
     //! \brief A new acknowledgment was received
-    bool ack_received(const WrappingInt32 ackno, const uint16_t window_size);
+    void ack_received(const WrappingInt32 ackno, const uint16_t window_size);
 
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();

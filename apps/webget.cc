@@ -1,5 +1,5 @@
-#include "../libsponge/util/socket.hh"
-#include "../libsponge/util/util.hh"
+#include "tcp_sponge_socket.hh"
+#include "util.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -8,7 +8,7 @@ using namespace std;
 
 void get_URL(const string &host, const string &path) {
     // Your code here.
-  TCPSocket sock;
+  CS144TCPSocket sock;
   sock.connect(Address(host, "http"));
 
   sock.write("GET "+path+" HTTP/1.1\r\n");
@@ -31,6 +31,7 @@ void get_URL(const string &host, const string &path) {
     // the "eof" (end of file).
 
     cerr << "Function called: get_URL(" << host << ", " << path << ").\n";
+    sock.wait_until_closed();
     cerr << "Warning: get_URL() has not been implemented yet.\n";
 }
 
