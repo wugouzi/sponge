@@ -5,9 +5,11 @@
 #include "tcp_receiver.hh"
 #include "tcp_sender.hh"
 #include "tcp_state.hh"
+#include<vector>
 
+enum STATE {CLOSED=0,FIN_WAIT_1, FIN_WAIT_2, CLOSING, TIME_WAIT, CLOSE_WAIT, LAST_ACK, ERROR};
 //! \brief A complete endpoint of a TCP connection
-class TCPConnection {
+class TCPConnection {  
   private:
     TCPConfig _cfg;
     TCPReceiver _receiver{_cfg.recv_capacity};
@@ -16,6 +18,9 @@ class TCPConnection {
     size_t _seg_time{0};
     std::optional<size_t> _stream_end_time{};
     bool _active{true};
+    STATE _state{CLOSED};
+    uint16_t _port{0};
+    std::vector<std::string> _state_text{"CLOSED", "FIN_WAIT_1", "FIN_WAIT_2", "CLOSING", "TIME_WAIT", "CLOSE_WAIT", "LAST_ACK", "ERROR"};
 
     //! outbound queue of segments that the TCPConnection wants sent
     std::queue<TCPSegment> _segments_out{};
@@ -30,6 +35,10 @@ class TCPConnection {
     void unclean_shutdown();
 
     void send_rst();
+
+    void change_state(STATE);
+
+    void print_seg(const TCPSegment&);
 
   public:
     //! \name "Input" interface for the writer

@@ -31,13 +31,27 @@ size_t TCPConnection::time_since_last_segment_received() const {
 void TCPConnection::unclean_shutdown() {
     _sender.stream_in().set_error();
     _receiver.stream_out().set_error();
+    change_state(CLOSED);
     _active = false;
 }
 
+void TCPConnection::print_seg(const TCPSegment &seg) {
+    const TCPHeader &head = seg.header();
+    cerr << "ack:" << 0+head.ack ;
+    cerr << " fin:" << 0+head.fin << " syn:" <<  0+head.syn;
+    cerr << " rst:" << 0+head.rst;
+    cerr << " ackno:" << head.ackno.raw_value();
+    cerr << " seqno:" << head.seqno.raw_value();
+    cerr << " port:" << head.dport << std::endl;
+    // cerr << " payload:" << seg.payload().copy() << std::endl;
+}
+
 void TCPConnection::segment_received(const TCPSegment &seg) { 
+    print_seg(seg);
     if (!_active)
         return;
-
+    if (_port == 0)
+        _port = seg.header().dport;
     _seg_time = _current_time;
     const TCPHeader &head = seg.header();
     
@@ -59,17 +73,21 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     // if receiver doesn't get the syn
     if (!_receiver.ackno().has_value())
         return;
-    
-    if (head.fin) {
-        _receiver.stream_out().end_input();
-        // seems can end input of sender
-        if (!_sender.stream_in().eof()) {
-            _linger_after_streams_finish = false;
-        }
+
+    if (!_sender.stream_in().eof() && _receiver.stream_out().input_ended()) {
+        _linger_after_streams_finish = false;
+        change_state(CLOSE_WAIT);
     }
 
-    if (head.ack) 
+    if (head.ack) {
         _sender.ack_received(head.ackno, head.win);
+        if (_state == CLOSE_WAIT)
+            change_state(LAST_ACK);
+        if (_state == CLOSING)
+            change_state(TIME_WAIT);
+        if (_state == FIN_WAIT_1)
+            change_state(FIN_WAIT_2);
+    }
     // this need more consideration
     _sender.fill_window();
     // if the incoming segment occupied any sequence numbers, 
@@ -85,6 +103,11 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
 
 bool TCPConnection::active() const {
     return _active;
+}
+
+void TCPConnection::change_state(STATE st) {
+    _state = st;
+    // cerr << _port << ": " << _state_text[_state] << std::endl;
 }
 
 size_t TCPConnection::write(const string &data) {
@@ -114,6 +137,7 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
         && _sender.bytes_in_flight() == 0) {
         _linger_after_streams_finish = false;
         _active = false;
+        change_state(CLOSED);
         return; 
     }
     write_segment();
@@ -122,6 +146,7 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
 void TCPConnection::end_input_stream() {
     _sender.stream_in().end_input();
     _sender.fill_window();
+    change_state(FIN_WAIT_1);
     write_segment();
 }
 
