@@ -1,6 +1,11 @@
 #include "router.hh"
-
+#include "address.hh"
+#include "ipv4_header.hh"
+#include <algorithm>
+#include <cassert>
+#include <cstdio>
 #include <iostream>
+#include <utility>
 
 using namespace std;
 
@@ -29,14 +34,40 @@ void Router::add_route(const uint32_t route_prefix,
     cerr << "DEBUG: adding route " << Address::from_ipv4_numeric(route_prefix).ip() << "/" << int(prefix_length)
          << " => " << (next_hop.has_value() ? next_hop->ip() : "(direct)") << " on interface " << interface_num << "\n";
 
+    // cerr << Address::from_ipv4_numeric(route_prefix).to_string() << std::endl;
     DUMMY_CODE(route_prefix, prefix_length, next_hop, interface_num);
     // Your code here.
+    // cerr << k << std::endl;
+    _table.push_back(BB{route_prefix, prefix_length, next_hop, interface_num});
 }
 
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
-    DUMMY_CODE(dgram);
-    // Your code here.
+  IPv4Header &head = dgram.header();
+  if (head.ttl <= 1)
+    return;
+  int match_len = -1;
+  BB res;
+  for (auto& b : _table) {
+    //cerr << Address::from_ipv4_numeric(b.route_prefix).to_string() << std::endl;
+    if (b.route_prefix == 0 && b.prefix_length == 0 && match_len == -1) {
+      res = b;
+      match_len = 0;
+      continue;
+    }
+    uint32_t shift = 32 - b.prefix_length;
+    if ((b.route_prefix >> shift == head.dst >> shift) && b.prefix_length > match_len) {
+        res = b;
+        match_len = b.prefix_length;
+    }
+  }
+  if (match_len < 0)
+    return;
+  head.ttl--;
+  if (res.next_hop.has_value())
+    interface(res.interface_num).send_datagram(dgram, res.next_hop.value());
+  else
+    interface(res.interface_num).send_datagram(dgram, Address::from_ipv4_numeric(head.dst));
 }
 
 void Router::route() {

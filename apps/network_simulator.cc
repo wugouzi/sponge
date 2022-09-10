@@ -2,6 +2,7 @@
 #include "router.hh"
 #include "util.hh"
 
+#include <exception>
 #include <iostream>
 #include <list>
 #include <unordered_map>
@@ -80,6 +81,10 @@ class Host {
 
     bool expecting(const InternetDatagram &expected) const {
         for (const auto &x : _expecting_to_receive) {
+          // std::cout << "Host " + _name + " Expected Internet datagram: " + x.header().summary() + " payload=\"" + x.payload().concatenate() + "\"\n";
+          // std::cout << "Host " + _name + " Expected Internet datagram: " + expected.header().summary() + " payload=\"" + expected.payload().concatenate() + "\"\n";
+          // std::cout << "what: " + x.serialize().concatenate() + "\n";
+          // std::cout << "want: " + expected.serialize().concatenate() + "\n";
             if (x.serialize().concatenate() == expected.serialize().concatenate()) {
                 return true;
             }
@@ -294,7 +299,8 @@ void network_simulator() {
 
     cout << green << "\n\nSuccess! Testing applesauce sending to the Internet." << normal << "\n\n";
     {
-        auto dgram_sent = network.host("applesauce").send_to({"1.2.3.4"});
+      // auto dgram_sent = network.host("applesauce").send_to({"1.2.3.4"});
+      auto dgram_sent = network.host("applesauce").send_to({"1.2.3.4"});
         dgram_sent.header().ttl--;
         network.host("default_router").expect(dgram_sent);
         network.simulate();
