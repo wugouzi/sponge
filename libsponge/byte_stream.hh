@@ -25,7 +25,7 @@ class ByteStream {
   size_t _buf_size{0};
   bool _end{false};
   
-    bool _error{};  //!< Flag indicating that the stream suffered an error.
+  bool _error{};  //!< Flag indicating that the stream suffered an error.
 
   public:
     //! Construct a stream with room for `capacity` bytes.
